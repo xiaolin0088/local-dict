@@ -4,7 +4,7 @@
 type DictSourceVo = Record<string, DictItemVo<unknown>>;
 
 // DictItem 子项数据格式 Vo (泛型E是为了扩展属性用，如状态需要特定背景色、字体颜色等等)
-type DictItemVo<V, E extends object = object> = {
+type DictItemVo<V, E extends Record<string, unknown> = Record<string, unknown>> = {
   label: string;
   value: V;
 } & E;
@@ -24,7 +24,7 @@ export type DictLabelOf<T extends DictSourceVo> = T[keyof T]['label'];
 
 // 本地字典类
 class LocalDict<T extends DictSourceVo> {
-  private list: DictItemVo<DictValueOf<T>>[] = [];
+  private list: T[keyof T][] = [];
   private map: Map<DictValueOf<T>, DictLabelOf<T>> = new Map();
   private itemMap = new Map<DictValueOf<T>, T[keyof T]>();
   private dictItemMap = new Map<DictValueOf<T>, LocalDictItem<T[keyof T]>>();
@@ -48,7 +48,7 @@ class LocalDict<T extends DictSourceVo> {
   }
 
   // 获取 list { DictItemVo }[]
-  public getList(): DictItemVo<DictValueOf<T>>[] {
+  public getList(): T[keyof T][] {
     return this.list;
   }
 
@@ -106,7 +106,6 @@ class LocalDictItem<T extends DictItemVo<V>, V = T['value']> {
 
   /**
    * 获取扩展属性
-   * 现在来说太冗余了
    * @param key 扩展属性的key
    */
   // public getAttr<K extends Exclude<keyof T, 'label' | 'value'>>(key: K): T[K] {
@@ -141,6 +140,9 @@ class LocalDictItem<T extends DictItemVo<V>, V = T['value']> {
 // 因这段代码问题: LocalDict => ;(this as any)[key] = dictItem
 // 外部创建字典都需要通过该工厂函数创建, 工厂函数用于兜底 ts 的提示
 
-export default function createLocalDict<const T extends DictSourceVo>(data: T): DictInstance<T> {
+function createLocalDict<const T extends DictSourceVo>(data: T): DictInstance<T> {
   return new LocalDict(data) as DictInstance<T>;
 }
+
+export { createLocalDict };
+export default createLocalDict;
